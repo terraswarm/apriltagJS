@@ -109,9 +109,9 @@ One possible solution is to use lower resolution images.
 
 ## Changes that were made
 
-1. The getopt library was not well supported, so that code is commented out in apriltag/example/apriltag_demo.c
+1. The getopt library was not well supported, so that code is commented out in `apriltag/example/apriltag_demo.c`
 
-2. To pass files in to code compiled with Emscripten, we need to define use the (Emscripten Filesystem API)[https://kripken.github.io/emscripten-site/docs/api_reference/Filesystem-API.html].  So, we define a path called `/working`, so we add the following to apriltag/example/apriltag_demo.js
+2. To pass files in to code compiled with Emscripten, we need to define use the [Emscripten Filesystem API](https://kripken.github.io/emscripten-site/docs/api_reference/Filesystem-API.html).  So, we define a path called `/working`, so we add the following to apriltag/example/apriltag_demo.js
 
 ```
     #ifdef JS
@@ -131,8 +131,11 @@ One possible solution is to use lower resolution images.
 
 3. [Emscripten has pthreads support](https://kripken.github.io/emscripten-site/docs/porting/pthreads.html) but it only works with FireFox Nightly channel: "Any code that is compiled with pthreads support enabled will currently only work in the Firefox Nightly channel, since the SharedArrayBuffer specification is still in an experimental research stage before standardization. "
 So, if apriltag_demo.c is modified so that only one thread is used:
-    td->nthreads = 1;
 
-See https://www.icyphy.org/accessors/wiki/Notes/AprilTags
+```
+    td->nthreads = 1;
+```
+
+For more information, see https://www.icyphy.org/accessors/wiki/Notes/AprilTags
 
 
