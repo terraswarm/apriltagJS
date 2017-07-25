@@ -50,12 +50,27 @@ either expressed or implied, of the Regents of The University of Michigan.
 #include "common/pjpeg.h"
 #include "common/zarray.h"
 
+#define JS
+
+#ifdef JS
+#include <emscripten.h>
+#endif
+  
 // Invoke:
 //
 // tagtest [options] input.pnm
 
 int main(int argc, char *argv[])
 {
+
+#ifdef JS
+  EM_ASM(
+         FS.mkdir('/working');
+         FS.mount(NODEFS, { root: '.' }, '/working');
+         );
+#endif
+
+#ifndef JS
     getopt_t *getopt = getopt_create();
 
     getopt_add_bool(getopt, 'h', "help", 0, "Show this help");
@@ -77,9 +92,19 @@ int main(int argc, char *argv[])
         exit(0);
     }
 
+#endif
+#ifdef JS
+    printf("Arg: %s\n", argv[1]);
+    zarray_t *inputs = zarray_create(sizeof(char*));
+    zarray_add(inputs, argv[1]);
+#else
     const zarray_t *inputs = getopt_get_extra_args(getopt);
-
+#endif
     apriltag_family_t *tf = NULL;
+
+#ifdef JS
+    tf = tag36h11_create();
+#else
     const char *famname = getopt_get_string(getopt, "family");
     if (!strcmp(famname, "tag36h11"))
         tf = tag36h11_create();
@@ -95,11 +120,25 @@ int main(int argc, char *argv[])
         printf("Unrecognized tag family name. Use e.g. \"tag36h11\".\n");
         exit(-1);
     }
+#endif
 
+#ifdef JS
+    tf->black_border = 1;
+#else
     tf->black_border = getopt_get_int(getopt, "border");
+#endif
 
     apriltag_detector_t *td = apriltag_detector_create();
     apriltag_detector_add_family(td, tf);
+#ifdef JS
+    td->quad_decimate = 1.0;
+    td->quad_sigma = 0.0;
+    td->nthreads = 1;
+    td->debug = true;
+    td->refine_edges = true;
+    td->refine_decode = false;
+    td->refine_pose = false;
+#else
     td->quad_decimate = getopt_get_double(getopt, "decimate");
     td->quad_sigma = getopt_get_double(getopt, "blur");
     td->nthreads = getopt_get_int(getopt, "threads");
@@ -107,10 +146,16 @@ int main(int argc, char *argv[])
     td->refine_edges = getopt_get_bool(getopt, "refine-edges");
     td->refine_decode = getopt_get_bool(getopt, "refine-decode");
     td->refine_pose = getopt_get_bool(getopt, "refine-pose");
+#endif
 
+#ifdef JS
+    int quiet = false;
+    int maxiters = 1;
+#else
     int quiet = getopt_get_bool(getopt, "quiet");
 
     int maxiters = getopt_get_int(getopt, "iters");
+#endif
 
     const int hamm_hist_max = 10;
 
@@ -124,13 +169,21 @@ int main(int argc, char *argv[])
         if (maxiters > 1)
             printf("iter %d / %d\n", iter + 1, maxiters);
 
+#ifdef JS
+        for (int input = 1; input < argc; input++) {
+#else
         for (int input = 0; input < zarray_size(inputs); input++) {
+#endif
 
             int hamm_hist[hamm_hist_max];
             memset(hamm_hist, 0, sizeof(hamm_hist));
 
             char *path;
+#ifdef JS
+            path = argv[input];
+#else            
             zarray_get(inputs, input, &path);
+#endif
             if (!quiet)
                 printf("loading %s\n", path);
             else

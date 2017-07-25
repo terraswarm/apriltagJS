@@ -41,3 +41,10 @@ libapriltag.so: $(APRILTAG_OBJS)
 clean:
 	@rm -rf *.o common/*.o $(TARGETS)
 	@$(MAKE) -C example clean
+
+######
+# apriltagJS code below here.
+# See ../README.md
+
+apriltags_demo.js: $(APRILTAG_SRCS)
+	emcc -I. -s ALLOW_MEMORY_GROWTH=1 -o $@ $^ example/apriltag_demo.c
